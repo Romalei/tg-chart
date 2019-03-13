@@ -6,16 +6,14 @@ function dom(parent, element) {
 
 class TgChart {
 
-    selectedCols = [];
-    x0 = 1;
-    x1 = 1;
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    x0 = 0;
+    x1 = 0;
     maxY = 0;
     step = 1;
     lineWidth = 3;
     sectionSize = 30;
-    xColumn;
-    lineColumns;
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    columns = {};
 
     get pointsCount() {
         return this.data.columns[0].length;
@@ -38,12 +36,16 @@ class TgChart {
 
         if (typeof data === 'object') {
             console.log(data);
+            
             this.data = data;
-            this.xColumn = this.data.columns.find(col => this.data.types[col[0]] === 'x');
-            this.lineColumns = this.data.columns.filter(col => this.data.types[col[0]] === 'line');
+            this.data.columns.forEach(col => {
+                this.columns[col[0]] = {
+                    value: col.slice(1),
+                    shown: true,
+                };
+            });
 
             this.setStartEnd(1, this.sectionSize);
-            
             this.setStyles();
             this.createButtons();
             this.calculateSize();
@@ -76,7 +78,8 @@ class TgChart {
     }
 
     onBtnClick(e, key) {
-        console.log(e.target.checked, key);
+        this.columns[key].shown = !e.target.checked;
+        this.draw();
     }
 
     setStyles() {
@@ -122,18 +125,18 @@ class TgChart {
         this.ctx.lineWidth = this.lineWidth;
         let x0, y0, x1, y1;
 
-
-        for (let i = this.x0; i < this.x1; i += this.step) {
-            const date = new Date(this.xColumn[i]);
+        for (let i = this.x0; i < this.x1 - 1; i += this.step) {
+            const date = new Date(this.columns['x'].value[i]);
             x0 = this.getX(i);
             x1 = this.getX(i + 1);
 
-            for (const line of this.lineColumns) {
+            for (const key of Object.keys(this.columns).filter(k => this.isLineCol(k) && this.columns[k].shown)) {
+                const line = this.columns[key].value;
                 y0 = this.canvas.height - line[i] * this.canvas.height / this.maxY;
                 y1 = this.canvas.height - line[i + 1] * this.canvas.height / this.maxY;
 
                 this.ctx.beginPath();
-                this.ctx.strokeStyle = this.data.colors[line[0]];
+                this.ctx.strokeStyle = this.data.colors[key];
                 this.ctx.moveTo(x0, y0);
                 this.ctx.lineTo(x1, y1);
                 this.ctx.stroke();
@@ -146,8 +149,12 @@ class TgChart {
     }
 
     getX(index) {
-        return (this.xColumn[index] - this.xColumn[this.x0]) * this.canvas.width /
-            (this.xColumn[this.x1] - this.xColumn[this.x0]);
+        return (this.columns['x'].value[index] - this.columns['x'].value[this.x0]) * this.canvas.width /
+            (this.columns['x'].value[this.x1] - this.columns['x'].value[this.x0]);
+    }
+
+    isLineCol(key) {
+        return this.data.types[key] === 'line';
     }
 
     static refs = [];
