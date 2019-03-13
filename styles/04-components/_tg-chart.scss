@@ -1,0 +1,115 @@
+$btn-size: 2.5em;
+
+.tg-chart-wrapper {
+    display: flex;
+    flex-direction: column;
+    font-family: sans-serif;
+}
+
+.tg-chart-buttons {
+    display: flex;
+
+    &__item {
+        background: none;
+        border: none;
+        border-radius: 10em;
+        outline: none;
+        position: relative;
+        padding: 8px 16px 8px 8px;
+        border: 1px solid #dfdfdf;
+        margin: 8px;
+        line-height: 1;
+        height: $btn-size;
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+    }
+}
+
+.tg-chart-checkbox {
+    appearance: none;
+    position: absolute;
+    -webkit-appearance: none;
+    outline: none;
+    margin: 0;
+
+    &:checked+.tg-chart-checkbox-indicator {
+        &::before {
+            width: 0;
+        }
+
+        &::after {
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: calc(#{$btn-size} - 20px);
+            height: calc(#{$btn-size} - 20px);
+            border-radius: 100%;
+        }
+    }
+
+    &:checked~.tg-chart-checkbox-ripple {
+        width: #{$btn-size * 2};
+        height: #{$btn-size * 2};
+        border: 6px solid rgba(0, 0, 0, 0);
+        opacity: 1;
+    }
+}
+
+.tg-chart-checkbox-indicator {
+    position: absolute;
+    left: 0.5em;
+    width: calc(#{$btn-size} - 16px);
+    height: calc(#{$btn-size} - 16px);
+    border-radius: 100%;
+    background-color: #dfdfdf;
+
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        background-color: #fff;
+        height: 2px;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: auto;
+        transition: all .2s;
+    }
+
+    &::before {
+        width: 50%;
+        top: -2%;
+        left: 19%;
+        transform: rotateZ(-42deg);
+    }
+
+    &::after {
+        width: 30%;
+        top: 17%;
+        right: 35%;
+        transform: rotateZ(50deg);
+    }
+}
+
+.tg-chart-checkbox-ripple {
+    position: absolute;
+    display: inline-block;
+    transition: all .8s;
+    border: 20px solid rgba(0, 0, 0, .35);
+    border-radius: 100%;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    pointer-events: none;
+    margin: auto;
+    left: calc(-1.35em - calc(#{$btn-size} - 16px) / 2);
+    right: 0;
+}
+
+.tg-chart-checkbox-text {
+    margin-left: 2em;
+    user-select: none;
+}

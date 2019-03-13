@@ -1,0 +1,7 @@
+{
+  "name": "tg-chart",
+  "version": "1.0.0",
+  "description": "A chart library for telegram coding challenge",
+  "main": "main.js",
+  "author": "Roman Zherdev",
+  "license": "ISC"}

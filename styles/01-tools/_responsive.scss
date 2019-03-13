@@ -1,0 +1,9 @@
+@mixin media($key) {
+    @if map-has-key($ns__breakpoints, $key) == false {
+        @warn "$ns__breakpoints has no element with key'#{$key}'";
+    } @else {
+        @media only screen and (max-width: #{map-get($ns__breakpoints, $key)}px) {
+            @content;
+        }
+    }
+}
