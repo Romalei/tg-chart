@@ -4,10 +4,12 @@ $btn-size: 2.5em;
     display: flex;
     flex-direction: column;
     font-family: sans-serif;
+    overflow: hidden;
 }
 
 .tg-chart-buttons {
     display: flex;
+    flex-wrap: wrap;
 
     &__item {
         background: none;

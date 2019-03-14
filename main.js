@@ -6,7 +6,9 @@ function dom(parent, element) {
 
 class TgChart {
 
+    gridColor = '#A9ABAD';
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    xAxisHeight = 60;
     x0 = 0;
     x1 = 0;
     maxY = 0;
@@ -14,6 +16,10 @@ class TgChart {
     lineWidth = 3;
     sectionSize = 30;
     columns = {};
+
+    get normalizedHeight() {
+        return this.canvas.height - this.xAxisHeight * 2;
+    }
 
     get pointsCount() {
         return this.data.columns[0].length;
@@ -36,7 +42,7 @@ class TgChart {
 
         if (typeof data === 'object') {
             console.log(data);
-            
+
             this.data = data;
             this.data.columns.forEach(col => {
                 this.columns[col[0]] = {
@@ -79,6 +85,7 @@ class TgChart {
 
     onBtnClick(e, key) {
         this.columns[key].shown = !e.target.checked;
+        this.calculateMaxY();
         this.draw();
     }
 
@@ -94,23 +101,23 @@ class TgChart {
 
     onResize() {
         TgChart.refs.forEach(el => {
-            el.canvas.width = 0;
-            el.canvas.height = 0;
-            setTimeout(() => {
-                el.canvas.width = el.container.clientWidth;
-                el.canvas.height = 400;
-            }, 0);
+            el.canvas.width = el.container.clientWidth;
+            el.canvas.height = 400;
+            el.draw();
         });
     }
 
     setStartEnd(x0, x1) {
         this.x0 = x0;
         this.x1 = x1 > this.pointsCount ? this.pointsCount : x1;
+        this.calculateMaxY();
+    }
 
+    calculateMaxY() {
         this.maxY = this.data.columns
-            .filter(col => this.data.types[col[0]] === 'line')
+            .filter(col => this.isLineCol(col[0]) && this.columns[col[0]].shown)
             .reduce((acc, cur) => {
-                const max = Math.max(...cur.slice(x0, x1));
+                const max = Math.max(...cur.slice(this.x0, this.x1));
                 return max > acc ? max : acc;
             }, 0);
     }
@@ -118,7 +125,41 @@ class TgChart {
     // DRAWING
     draw() {
         this.clear();
+        this.drawGrid();
         this.drawLines();
+        this.drawNumbers();
+        this.drawXAxis();
+    }
+
+    drawGrid() {
+        let normalizer = Math.pow(10, this.maxY.toString().length - 2);
+
+        const sectionValue = Math.floor(Math.round(this.maxY / 5 / normalizer) * normalizer);
+
+        this.ctx.lineWidth = 0.2;
+        this.ctx.strokeStyle = this.gridColor;
+        let y;
+        for (let i = 0; i < 6; i++) {
+            y = this.getY(sectionValue * i, sectionValue * 5);
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, y);
+            this.ctx.lineTo(this.canvas.width, y);
+            this.ctx.stroke();
+        }
+    }
+
+    drawNumbers() {
+        const normalizer = Math.pow(10, this.maxY.toString().length - 2);
+        const sectionValue = Math.floor(Math.round(this.maxY / 5 / normalizer) * normalizer);
+
+        this.ctx.fillStyle = this.gridColor;
+        this.ctx.font = '12px sans-serif';
+
+        let y;
+        for (let i = 0; i < 6; i++) {
+            y = this.getY(sectionValue * i, sectionValue * 5);
+            this.ctx.fillText(sectionValue * i, 5, y - 8);
+        }
     }
 
     drawLines() {
@@ -126,14 +167,13 @@ class TgChart {
         let x0, y0, x1, y1;
 
         for (let i = this.x0; i < this.x1 - 1; i += this.step) {
-            const date = new Date(this.columns['x'].value[i]);
-            x0 = this.getX(i);
-            x1 = this.getX(i + 1);
+            x0 = this.getX(this.columns['x'].value[i]);
+            x1 = this.getX(this.columns['x'].value[i + 1]);
 
             for (const key of Object.keys(this.columns).filter(k => this.isLineCol(k) && this.columns[k].shown)) {
                 const line = this.columns[key].value;
-                y0 = this.canvas.height - line[i] * this.canvas.height / this.maxY;
-                y1 = this.canvas.height - line[i + 1] * this.canvas.height / this.maxY;
+                y0 = this.getY(this.columns[key].value[i]);
+                y1 = this.getY(this.columns[key].value[i + 1]);
 
                 this.ctx.beginPath();
                 this.ctx.strokeStyle = this.data.colors[key];
@@ -144,13 +184,34 @@ class TgChart {
         }
     }
 
+    drawXAxis() {
+        this.ctx.fillStyle = this.gridColor;
+        this.ctx.font = '12px sans-serif';
+        const sectionsCount = Math.floor(this.canvas.width / 100);
+        const step = Math.floor((this.x1 - this.x0) / sectionsCount);
+        const xSectorSize = this.canvas.width / sectionsCount;
+        let iteration = 0;
+        for (let i = this.x0; i < this.x1; i += step) {
+            const date = new Date(this.columns['x'].value[i]);
+            const text = `${this.months[date.getMonth()]} ${date.getDate()}`;
+            this.ctx.fillText(text,
+                xSectorSize * iteration + xSectorSize / 3,
+                this.canvas.height - this.xAxisHeight / 1.5);
+            iteration++;
+        }
+    }
+
     clear() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
-    getX(index) {
-        return (this.columns['x'].value[index] - this.columns['x'].value[this.x0]) * this.canvas.width /
+    getX(value) {
+        return (value - this.columns['x'].value[this.x0]) * this.canvas.width /
             (this.columns['x'].value[this.x1] - this.columns['x'].value[this.x0]);
+    }
+
+    getY(value, max = this.maxY) {
+        return this.normalizedHeight - value * this.normalizedHeight / max + this.xAxisHeight;
     }
 
     isLineCol(key) {

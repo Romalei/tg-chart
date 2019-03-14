@@ -4,4 +4,8 @@
   "description": "A chart library for telegram coding challenge",
   "main": "main.js",
   "author": "Roman Zherdev",
-  "license": "ISC"}
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^5.15.1"
+  }
+}
