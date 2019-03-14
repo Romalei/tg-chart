@@ -6,9 +6,12 @@ function dom(parent, element) {
 
 class TgChart {
 
+    chartVP;
+    timeLineVP;
+    xAxisVP;
+    timeLineHeight = 80;
     gridColor = '#A9ABAD';
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    xAxisHeight = 60;
     x0 = 0;
     x1 = 0;
     maxY = 0;
@@ -16,10 +19,6 @@ class TgChart {
     lineWidth = 3;
     sectionSize = 30;
     columns = {};
-
-    get normalizedHeight() {
-        return this.canvas.height - this.xAxisHeight * 2;
-    }
 
     get pointsCount() {
         return this.data.columns[0].length;
@@ -97,12 +96,38 @@ class TgChart {
     calculateSize() {
         this.canvas.width = this.container.clientWidth;
         this.canvas.height = 400;
+
+        // this.chartVP = {x: 0, y 30, w: this.canvas.width, h: this.canvas.height - }
+        this.timeLineVP = {
+            x0: 0,
+            y0: this.canvas.height - this.timeLineHeight,
+            x1: this.canvas.width,
+            y1: this.canvas.height,
+        };
+
+        this.xAxisVP = {
+            x0: 0,
+            y0: this.timeLineVP.y0 - 30,
+            x1: this.canvas.width,
+            y1: this.timeLineVP.y0 - 1,
+        };
+
+        this.chartVP = {
+            x0: 0,
+            y0: 30,
+            x1: this.canvas.width,
+            y1: this.xAxisVP.y0 - 1,
+            height: function () {
+                return this.y1 - this.y0;
+            }
+        };
     }
 
     onResize() {
         TgChart.refs.forEach(el => {
             el.canvas.width = el.container.clientWidth;
             el.canvas.height = 400;
+            this.calculateSize();
             el.draw();
         });
     }
@@ -124,6 +149,8 @@ class TgChart {
 
     // DRAWING
     draw() {
+        console.log(this);
+        
         this.clear();
         this.drawGrid();
         this.drawLines();
@@ -171,7 +198,6 @@ class TgChart {
             x1 = this.getX(this.columns['x'].value[i + 1]);
 
             for (const key of Object.keys(this.columns).filter(k => this.isLineCol(k) && this.columns[k].shown)) {
-                const line = this.columns[key].value;
                 y0 = this.getY(this.columns[key].value[i]);
                 y1 = this.getY(this.columns[key].value[i + 1]);
 
@@ -196,13 +222,13 @@ class TgChart {
             const text = `${this.months[date.getMonth()]} ${date.getDate()}`;
             this.ctx.fillText(text,
                 xSectorSize * iteration + xSectorSize / 3,
-                this.canvas.height - this.xAxisHeight / 1.5);
+                this.xAxisVP.y0 + 16);
             iteration++;
         }
     }
 
-    clear() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    clear(x = 0, y = 0, w = this.canvas.width, h = this.canvas.height) {
+        this.ctx.clearRect(x, y, w, h);
     }
 
     getX(value) {
@@ -211,7 +237,7 @@ class TgChart {
     }
 
     getY(value, max = this.maxY) {
-        return this.normalizedHeight - value * this.normalizedHeight / max + this.xAxisHeight;
+        return this.chartVP.height() - value * this.chartVP.height() / max + this.chartVP.y0;
     }
 
     isLineCol(key) {
