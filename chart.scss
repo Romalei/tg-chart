@@ -5,13 +5,16 @@ $btn-size: 2.5em;
     flex-direction: column;
     font-family: sans-serif;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .tg-chart-buttons {
     display: flex;
     flex-wrap: wrap;
+    box-sizing: inherit;
 
     &__item {
+        box-sizing: inherit;
         background: none;
         border: none;
         border-radius: 10em;
@@ -29,6 +32,7 @@ $btn-size: 2.5em;
 }
 
 .tg-chart-checkbox {
+    box-sizing: inherit;
     appearance: none;
     position: absolute;
     -webkit-appearance: none;
@@ -60,6 +64,7 @@ $btn-size: 2.5em;
 }
 
 .tg-chart-checkbox-indicator {
+    box-sizing: inherit;
     position: absolute;
     left: 0.5em;
     width: calc(#{$btn-size} - 16px);
@@ -97,6 +102,7 @@ $btn-size: 2.5em;
 }
 
 .tg-chart-checkbox-ripple {
+    box-sizing: inherit;
     position: absolute;
     display: inline-block;
     transition: all .8s;
@@ -112,6 +118,7 @@ $btn-size: 2.5em;
 }
 
 .tg-chart-checkbox-text {
+    box-sizing: inherit;
     margin-left: 2em;
     user-select: none;
 }

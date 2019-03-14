@@ -6,26 +6,29 @@ function dom(parent, element) {
 
 class TgChart {
 
-    chartVP;
-    timeLineVP;
-    xAxisVP;
-    timeLineHeight = 80;
-    gridColor = '#A9ABAD';
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    x0 = 0;
-    x1 = 0;
-    maxYForSelection = 0;
-    maxY = 0;
-    step = 1;
-    lineWidth = 3;
-    sectionSize = 30;
-    columns = {};
-
     get pointsCount() {
         return this.columns['x'].value.length;
     }
 
+    init() {
+        this.chartVP = {};
+        this.timeLineVP = {};
+        this.xAxisVP = {};
+        this.timeLineHeight = 80;
+        this.gridColor = '#A9ABAD';
+        this.months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        this.x0 = 0;
+        this.x1 = 0;
+        this.maxYForSelection = 0;
+        this.maxY = 0;
+        this.step = 1;
+        this.lineWidth = 3;
+        this.sectionSize = 30;
+        this.columns = {};
+    }
+
     constructor(container, data) {
+        this.init();
         this.container = container;
 
         this.canvas = dom(this.container, 'canvas');
@@ -257,7 +260,7 @@ class TgChart {
     isLineCol(key) {
         return this.data.types[key] === 'line';
     }
-
-    static refs = [];
-    static isListenerEnabled = false;
 }
+
+TgChart.refs = [];
+TgChart.isListenerEnabled = false;
