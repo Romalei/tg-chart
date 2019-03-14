@@ -1,0 +1,99 @@
+.tg-chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+  overflow: hidden;
+  box-sizing: border-box; }
+
+.tg-chart-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  box-sizing: inherit; }
+  .tg-chart-buttons__item {
+    box-sizing: inherit;
+    background: none;
+    border: none;
+    border-radius: 10em;
+    outline: none;
+    position: relative;
+    padding: 8px 16px 8px 8px;
+    border: 1px solid #dfdfdf;
+    margin: 8px;
+    line-height: 1;
+    height: 2.5em;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer; }
+
+.tg-chart-checkbox {
+  box-sizing: inherit;
+  appearance: none;
+  position: absolute;
+  -webkit-appearance: none;
+  outline: none;
+  margin: 0; }
+  .tg-chart-checkbox:checked + .tg-chart-checkbox-indicator::before {
+    width: 0; }
+  .tg-chart-checkbox:checked + .tg-chart-checkbox-indicator::after {
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: calc(2.5em - 20px);
+    height: calc(2.5em - 20px);
+    border-radius: 100%; }
+  .tg-chart-checkbox:checked ~ .tg-chart-checkbox-ripple {
+    width: 5em;
+    height: 5em;
+    border: 6px solid rgba(0, 0, 0, 0);
+    opacity: 1; }
+
+.tg-chart-checkbox-indicator {
+  box-sizing: inherit;
+  position: absolute;
+  left: 0.5em;
+  width: calc(2.5em - 16px);
+  height: calc(2.5em - 16px);
+  border-radius: 100%;
+  background-color: #dfdfdf; }
+  .tg-chart-checkbox-indicator::before, .tg-chart-checkbox-indicator::after {
+    content: '';
+    position: absolute;
+    background-color: #fff;
+    height: 2px;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+    transition: all .2s; }
+  .tg-chart-checkbox-indicator::before {
+    width: 50%;
+    top: -2%;
+    left: 19%;
+    transform: rotateZ(-42deg); }
+  .tg-chart-checkbox-indicator::after {
+    width: 30%;
+    top: 17%;
+    right: 35%;
+    transform: rotateZ(50deg); }
+
+.tg-chart-checkbox-ripple {
+  box-sizing: inherit;
+  position: absolute;
+  display: inline-block;
+  transition: all .8s;
+  border: 20px solid rgba(0, 0, 0, 0.35);
+  border-radius: 100%;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+  margin: auto;
+  left: calc(-1.35em - calc(2.5em - 16px) / 2);
+  right: 0; }
+
+.tg-chart-checkbox-text {
+  box-sizing: inherit;
+  margin-left: 2em;
+  user-select: none; }
