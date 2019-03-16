@@ -89,6 +89,7 @@ class TgChart {
     onBtnClick(e, key) {
         this.columns[key].shown = !e.target.checked;
         this.calculateMaxY();
+        
         this.draw();
     }
 
@@ -149,7 +150,7 @@ class TgChart {
         let maxYForSelection = 0;
 
         Object.keys(this.columns)
-            .filter(k => this.isLineCol(k))
+            .filter(k => this.isLineCol(k) && this.columns[k].shown)
             .map(k => this.columns[k].value)
             .forEach(cols => {
                 cols.forEach((point, i) => {
