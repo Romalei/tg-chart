@@ -28,6 +28,7 @@ $btn-size: 2.5em;
         display: inline-flex;
         align-items: center;
         cursor: pointer;
+        user-select: none;
     }
 }
 
