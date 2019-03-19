@@ -63,7 +63,8 @@ class TgChart {
         this.calculateMaxY();
         this.setViewports();
 
-        this.canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
+        this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
+        document.addEventListener('mousemove', this.onMouseMove.bind(this));
 
         TgChart.refs.push(this);
         if (!TgChart.isListenerEnabled) {
@@ -87,17 +88,25 @@ class TgChart {
         };
     }
 
+    onMouseDown(e) {
+        this.isMouseDown = true;
+    }
+
     onMouseMove(e) {
-        if (!(e.offsetX >= this.trackVP.x0 && e.offsetX <= this.trackVP.x1 &&
+        const offsetX = e.pageX - this.canvas.getBoundingClientRect().left;
+
+        if (!(offsetX >= this.trackVP.x0 && offsetX <= this.trackVP.x1 &&
                 e.offsetY >= this.trackVP.y0 && e.offsetY <= this.trackVP.y1) && !this.mode) {
             this.canvas.style.setProperty('cursor', 'default');
             return;
         }
 
         if (!this.mode) {
-            if (e.offsetX - this.trackVP.x0 <= this.trackVP.resizer ||
-                this.trackVP.x1 - this.trackVP.resizer <= e.offsetX) {
-                this.mode = 'resizing'
+            if (offsetX - this.trackVP.x0 <= this.trackVP.resizer) {
+                this.mode = 'resizing-l';
+                this.canvas.style.setProperty('cursor', 'ew-resize');
+            } else if (this.trackVP.x1 - this.trackVP.resizer <= offsetX) {
+                this.mode = 'resizing-r';
                 this.canvas.style.setProperty('cursor', 'ew-resize');
             } else {
                 this.mode = 'moving';
@@ -105,15 +114,17 @@ class TgChart {
             }
         }
 
-        if (e.buttons !== 1) {
+        if (e.buttons !== 1 || !this.isMouseDown) {
             this.mode = null;
+            this.isMouseDown = false;
             return;
         }
 
         switch (this.mode) {
-            case 'resizing':
+            case 'resizing-l':
+            case 'resizing-r':
                 this.resize(e.movementX);
-                this.setViewports();
+                this.setTrack();
                 break;
             case 'moving':
                 this.move(e.movementX);
@@ -135,18 +146,22 @@ class TgChart {
         this.canvas.width = this.container.clientWidth;
         this.canvas.height = 400;
 
-        this.canvas.width = this.container.clientWidth;
         this.timeLineVP = this.makeViewport(0, this.canvas.height - this.timeLineHeight, this.canvas.width, this.canvas.height);
         this.xAxisVP = this.makeViewport(0, this.timeLineVP.y0 - 30, this.canvas.width, this.timeLineVP.y0 - 1);
         this.chartVP = this.makeViewport(0, 30, this.canvas.width * 100 / this.trackSize, this.xAxisVP.y0 - 1);
+        this.setTrack();
+        this.move(0);
+
+        this.draw();
+    }
+
+    setTrack() {
         const trackX0 = this.trackVP ? this.trackVP.x0 : 0;
         const trackX1 = trackX0 + this.trackSize * this.canvas.width / 100;
         this.trackVP = {
             ...this.makeViewport(trackX0, this.timeLineVP.y0, trackX1, this.timeLineVP.y1),
             resizer: 8,
         };
-
-        this.draw();
     }
 
     move(offset) {
@@ -157,11 +172,24 @@ class TgChart {
     }
 
     resize(offset) {
-        console.log(offset);
         const value = offset * 100 / this.canvas.width;
-        if (this.trackSize + value < this.minTrackSize) this.trackSize = this.minTrackSize;
-        else if (this.trackSize + value > 100) this.trackSize = 100;
-        else this.trackSize += value;
+        let newSize;
+        switch (this.mode) {
+            case 'resizing-r':
+                newSize = this.trackSize + value;
+                const x1 = this.trackVP.x1 + offset;
+                if (newSize >= this.minTrackSize && x1 <= this.canvas.width) this.trackSize += value;
+                break;
+            case 'resizing-l':
+                newSize = this.trackSize - value;
+                const x0 = this.trackVP.x0 + offset;
+                if (newSize >= this.minTrackSize && x0 >= 0) {
+                    this.trackSize = newSize;
+                    this.trackVP.x0 += offset;
+                }
+                break;
+        }
+        this.setViewports();
     }
 
     calculateMaxY() {
@@ -219,7 +247,7 @@ class TgChart {
         for (let i = startX; i < endX; i += 1) {
             x0 = this.getX(this.columns['x'].value[i], vp) - (vp.offset || 0);
             x1 = this.getX(this.columns['x'].value[i + 1], vp) - (vp.offset || 0);
-            if (x0 < 0 || x1 > vp.x1) continue;
+            if (x0 < -50 || x1 > vp.x1 + 50) continue;
 
             for (const key of Object.keys(this.columns).filter(k => this.isLineCol(k) && this.columns[k].shown)) {
                 y0 = this.getY(this.columns[key].value[i], this.maxY, vp);
@@ -238,10 +266,13 @@ class TgChart {
         this.ctx.fillStyle = this.gridColor;
         this.ctx.font = '12px sans-serif';
         const sectionsCount = Math.floor(this.canvas.width / 100);
-        const step = Math.floor(this.pointsCount / sectionsCount);
         const xSectorSize = this.canvas.width / sectionsCount;
+        const step = Math.floor(this.pointsCount * this.trackSize / 100 / sectionsCount);
+        const start = 0;
+        const end = 0;
         let iteration = 0;
-        for (let i = 0; i < this.pointsCount; i += step) {
+
+        for (let i = start; i < end; i += step) {
             const date = new Date(this.columns['x'].value[i]);
             const text = `${this.months[date.getMonth()]} ${date.getDate()}`;
             this.ctx.fillText(text,
@@ -298,9 +329,4 @@ TgChart.dom = function (parent, element) {
     const el = document.createElement(element);
     parent.appendChild(el);
     return el;
-}
-
-function test(func, expect, ...args) {
-    const res = func(...args);
-    console.log(`expect ${res} === ${expect} ::: ${res === expect}`);
 }
