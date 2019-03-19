@@ -17,7 +17,7 @@ gulp.task('sass', function () {
 });
 
 gulp.task('compress', function () {
-    return gulp.src('main.js')
+    return gulp.src('tgchart.js')
         .pipe(babel({
             presets: ['@babel/env']
         }))

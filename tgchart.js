@@ -97,7 +97,6 @@ class TgChart {
         document.addEventListener('touchend', e => {
             this.isTouched = false;
             this.mode = null;
-            note(this.mode);
             document.removeEventListener('touchend', arguments.callee);
         })
     }
@@ -361,16 +360,4 @@ TgChart.dom = function (parent, element) {
 }
 TgChart.onWindowResize = function () {
     TgChart.refs.forEach(ref => ref.setViewports());
-}
-/////////////////// DEBUG
-const dbg = document.createElement('div');
-dbg.style.setProperty('background', '#fff');
-dbg.style.setProperty('padding', '20px');
-dbg.style.setProperty('position', 'fixed');
-dbg.style.setProperty('left', '0');
-dbg.style.setProperty('top', '0');
-document.body.appendChild(dbg);
-
-function note(text) {
-    dbg.innerHTML = text;
 }
