@@ -15,7 +15,6 @@ class TgChart {
     }
 
     constructor(container, data) {
-        console.log(data);
         if (typeof data !== 'object') return;
         this.data = data;
         this.container = container;
@@ -61,16 +60,20 @@ class TgChart {
         }, {});
 
         this.calculateMaxY();
-        this.setViewports();
 
-        this.canvas.addEventListener('mousedown', this.onMouseDown.bind(this));
-        document.addEventListener('mousemove', this.onMouseMove.bind(this));
+        setTimeout(() => {
+            this.setViewports();
+            this.canvas.addEventListener('mousedown', this.onMouseDownOrTouchStart.bind(this));
+            document.addEventListener('mousemove', this.prepareToMove.bind(this));
+            this.canvas.addEventListener('touchstart', this.onMouseDownOrTouchStart.bind(this));
+            document.addEventListener('touchmove', this.prepareToMove.bind(this));
 
-        TgChart.refs.push(this);
-        if (!TgChart.isListenerEnabled) {
-            window.addEventListener('resize', () => this.setViewports());
-            TgChart.isListenerEnabled = true;
-        }
+            TgChart.refs.push(this);
+            if (!TgChart.isListenerEnabled) {
+                window.addEventListener('resize', TgChart.onWindowResize);
+                TgChart.isListenerEnabled = true;
+            }
+        }, 0);
     }
 
     makeViewport(x0, y0, x1, y1) {
@@ -88,21 +91,47 @@ class TgChart {
         };
     }
 
-    onMouseDown(e) {
-        this.isMouseDown = true;
+    onMouseDownOrTouchStart(e) {
+        if (!this.canvas.contains(e.target)) return;
+        this.isTouched = true;
+        document.addEventListener('touchend', e => {
+            this.isTouched = false;
+            this.mode = null;
+            note(this.mode);
+            document.removeEventListener('touchend', arguments.callee);
+        })
     }
 
-    onMouseMove(e) {
-        const offsetX = e.pageX - this.canvas.getBoundingClientRect().left;
+    prepareToMove(e) {
+        if (!this.canvas.contains(e.target)) return;
+        let isTouched, movementX, offsetY, offsetX;
+        const rect = this.canvas.getBoundingClientRect();
 
-        if (!(offsetX >= this.trackVP.x0 && offsetX <= this.trackVP.x1 &&
-                e.offsetY >= this.trackVP.y0 && e.offsetY <= this.trackVP.y1) && !this.mode) {
+        if (e instanceof MouseEvent) {
+            isTouched = e.buttons === 1;
+            offsetX = e.pageX - rect.left;
+            offsetY = e.offsetY;
+            movementX = e.movementX;
+        } else if (e instanceof TouchEvent) {
+            isTouched = !!e.touches.length;
+            offsetX = e.touches[0].pageX - rect.left;
+            offsetY = e.touches[0].pageY;
+            movementX = this.lastTouchX ? e.touches[0].pageX - this.lastTouchX : 0;
+            this.lastTouchX = e.touches[0].pageX;
+        }
+
+        this.onTouchOrMouseMove(movementX, isTouched, offsetX, offsetY);
+    }
+
+    onTouchOrMouseMove(movementX, isTouched, offsetX, offsetY) {
+        if (!this.mode && !(offsetX >= this.timeLineVP.x0 && offsetX <= this.timeLineVP.x1 &&
+                offsetY >= this.timeLineVP.y0 && offsetY <= this.timeLineVP.y1)) {
             this.canvas.style.setProperty('cursor', 'default');
             return;
         }
 
         if (!this.mode) {
-            if (offsetX - this.trackVP.x0 <= this.trackVP.resizer) {
+            if (offsetX <= this.trackVP.x0 + this.trackVP.resizer) {
                 this.mode = 'resizing-l';
                 this.canvas.style.setProperty('cursor', 'ew-resize');
             } else if (this.trackVP.x1 - this.trackVP.resizer <= offsetX) {
@@ -114,20 +143,20 @@ class TgChart {
             }
         }
 
-        if (e.buttons !== 1 || !this.isMouseDown) {
+        if (!isTouched || !this.isTouched) {
             this.mode = null;
-            this.isMouseDown = false;
+            this.isTouched = false;
             return;
         }
 
         switch (this.mode) {
             case 'resizing-l':
             case 'resizing-r':
-                this.resize(e.movementX);
+                this.resize(movementX);
                 this.setTrack();
                 break;
             case 'moving':
-                this.move(e.movementX);
+                this.move(movementX);
                 break;
         }
         this.draw();
@@ -160,7 +189,7 @@ class TgChart {
         const trackX1 = trackX0 + this.trackSize * this.canvas.width / 100;
         this.trackVP = {
             ...this.makeViewport(trackX0, this.timeLineVP.y0, trackX1, this.timeLineVP.y1),
-            resizer: 8,
+            resizer: 10,
         };
     }
 
@@ -175,18 +204,18 @@ class TgChart {
         const value = offset * 100 / this.canvas.width;
         let newSize;
         switch (this.mode) {
-            case 'resizing-r':
-                newSize = this.trackSize + value;
-                const x1 = this.trackVP.x1 + offset;
-                if (newSize >= this.minTrackSize && x1 <= this.canvas.width) this.trackSize += value;
-                break;
             case 'resizing-l':
-                newSize = this.trackSize - value;
                 const x0 = this.trackVP.x0 + offset;
+                newSize = this.trackSize - value;
                 if (newSize >= this.minTrackSize && x0 >= 0) {
                     this.trackSize = newSize;
                     this.trackVP.x0 += offset;
                 }
+                break;
+            case 'resizing-r':
+                const x1 = this.trackVP.x1 + offset;
+                newSize = this.trackSize + value;
+                if (newSize >= this.minTrackSize && x1 <= this.canvas.width) this.trackSize += value;
                 break;
         }
         this.setViewports();
@@ -329,4 +358,19 @@ TgChart.dom = function (parent, element) {
     const el = document.createElement(element);
     parent.appendChild(el);
     return el;
+}
+TgChart.onWindowResize = function () {
+    TgChart.refs.forEach(ref => ref.setViewports());
+}
+/////////////////// DEBUG
+const dbg = document.createElement('div');
+dbg.style.setProperty('background', '#fff');
+dbg.style.setProperty('padding', '20px');
+dbg.style.setProperty('position', 'fixed');
+dbg.style.setProperty('left', '0');
+dbg.style.setProperty('top', '0');
+document.body.appendChild(dbg);
+
+function note(text) {
+    dbg.innerHTML = text;
 }
