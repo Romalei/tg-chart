@@ -1,4 +1,9 @@
 $btn-size: 2.5em;
+$themes: (dark: #242F3E, light: #fff);
+
+@function theme($key) {
+    @return map-get($themes, $key);
+}
 
 .tg-chart-wrapper {
     display: flex;
@@ -6,6 +11,28 @@ $btn-size: 2.5em;
     font-family: sans-serif;
     overflow: hidden;
     box-sizing: border-box;
+    transition: all .2s;
+
+    @each $key,
+    $value in $themes {
+        &_#{$key} {
+            background-color: $value;
+
+            .tg-chart-buttons__item {
+                @if $key==dark {
+                    color: theme(light);
+                    border: 1px solid lighten($value, 12%);
+                }
+
+                else {
+                    color: theme(dark);
+                }
+            }
+        }
+    }
+    &_dark .tg-chart-checkbox:checked+.tg-chart-checkbox-indicator::after {
+        background-color: theme(dark);
+    }
 }
 
 .tg-chart-buttons {

@@ -27,6 +27,7 @@ class TgChart {
         // elements styles
         this.container.classList.add('tg-chart-wrapper');
         this.buttons.className = 'tg-chart-buttons';
+        this.theme = 'light';
         // create buttons
         Object.keys(this.data.names).forEach(key => {
             const label = TgChart.dom(this.buttons, 'label')
@@ -260,7 +261,7 @@ class TgChart {
         const normalizer = Math.pow(10, this.maxY.toString().length - 2);
         const sectionValue = Math.floor(Math.round(this.maxY / 5 / normalizer) * normalizer);
 
-        this.ctx.fillStyle = this.gridColor;
+        this.ctx.fillStyle = this.getTextColor();
         this.ctx.font = '12px sans-serif';
 
         let y;
@@ -272,12 +273,12 @@ class TgChart {
 
     drawLines(vp = this.chartVP, drawX = false) {
         this.ctx.lineWidth = this.lineWidth;
-        this.ctx.fillStyle = 'rgba(0,0,0,.4)';
+        this.ctx.fillStyle = this.getTextColor();
         this.ctx.font = '12px sans-serif';
 
         let x0, y0, x1, y1;
         const sectionsCount = vp.width() / 100;
-        const sectionSize = Math.round(this.pointsCount / sectionsCount);
+        const sectionSize = Math.floor(this.pointsCount / sectionsCount);
         const sectionWidth = vp.width() / sectionsCount;
         let sectionNumber = 0;
 
@@ -301,7 +302,6 @@ class TgChart {
 
             const date = new Date(this.columns.x.value[i]);
             const text = `${this.months[date.getMonth()]} ${date.getDate()}`;
-            console.log(sectionWidth * sectionNumber + sectionWidth / 6);
             this.ctx.fillText(text,
                 sectionWidth * sectionNumber++ + sectionWidth / 6,
                 this.xAxisVP.y0 + 16);
@@ -358,6 +358,17 @@ class TgChart {
             } else return minDifference;
         }, 0);
         return index;
+    }
+
+    setTheme(theme) {
+        this.container.classList.remove(`tg-chart-wrapper_${this.theme}`);
+        this.container.classList.add(`tg-chart-wrapper_${theme}`);
+        this.theme = theme;
+        this.draw();
+    }
+
+    getTextColor() {
+        return this.theme === 'dark' ? '#fff' : '#444';
     }
 }
 

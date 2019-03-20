@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
     <link rel="stylesheet" href="styles.css">
@@ -14,12 +15,18 @@
     <div class="grid" id="grid">
     </div>
 
+    <button class="switch-theme">
+        Theme
+    </button>
+
     <!--SCRIPTS-->
     <script src="tgchart.js"></script>
     <script>
         (function () {
-            const gridRef = document.getElementById('grid');
+            var gridRef = document.getElementById('grid');
+            var charts = [];
             if (!gridRef) return;
+
 
             fetch('./data/chart_data.json')
                 .then(res => res && res.json())
@@ -30,9 +37,16 @@
                         gridItem.className = 'grid__item';
                         gridRef.appendChild(gridItem);
 
-                        new TgChart(gridItem, chartData);
+                        charts.push(new TgChart(gridItem, chartData));
                     });
                 });
+
+            const themeSwitcher = document.querySelector('.switch-theme');
+            themeSwitcher.addEventListener('click', () => {
+                themeSwitcher.classList.toggle('switch-theme_light');
+                document.body.classList.toggle('body_dark');
+                charts.forEach(el => el.setTheme(el.theme === 'light' ? 'dark' : 'light'));
+            });
         }())
     </script>
 </body>
