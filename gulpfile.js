@@ -35,8 +35,8 @@ gulp.task('browser-sync', function () {
     });
 });
 
-gulp.task('watch', function () {
-    gulp.watch(['./index.html', './main.js']).on('change', browserSync.reload);
+gulp.task('watch', gulp.parallel('sass'), function () {
+    gulp.watch(['./index.html', './tgchart.js']).on('change', browserSync.reload);
     gulp.watch(['./styles.scss', './chart.scss'], gulp.parallel('sass'));
 });
 

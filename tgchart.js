@@ -1,7 +1,7 @@
 class TgChart {
 
     get pointsCount() {
-        return this.columns['x'].value.length;
+        return this.columns.x.value.length;
     }
 
     init() {
@@ -60,19 +60,21 @@ class TgChart {
         }, {});
 
         this.calculateMaxY();
+        this.setViewports();
+
+        this.canvas.addEventListener('mousedown', this.onMouseDownOrTouchStart.bind(this));
+        document.addEventListener('mousemove', this.prepareToMove.bind(this));
+        this.canvas.addEventListener('touchstart', this.onMouseDownOrTouchStart.bind(this));
+        document.addEventListener('touchmove', this.prepareToMove.bind(this));
+
+        TgChart.refs.push(this);
+        if (!TgChart.isListenerEnabled) {
+            window.addEventListener('resize', TgChart.onWindowResize);
+            TgChart.isListenerEnabled = true;
+        }
 
         setTimeout(() => {
-            this.setViewports();
-            this.canvas.addEventListener('mousedown', this.onMouseDownOrTouchStart.bind(this));
-            document.addEventListener('mousemove', this.prepareToMove.bind(this));
-            this.canvas.addEventListener('touchstart', this.onMouseDownOrTouchStart.bind(this));
-            document.addEventListener('touchmove', this.prepareToMove.bind(this));
-
-            TgChart.refs.push(this);
-            if (!TgChart.isListenerEnabled) {
-                window.addEventListener('resize', TgChart.onWindowResize);
-                TgChart.isListenerEnabled = true;
-            }
+            this.resize(0);
         }, 0);
     }
 
@@ -232,9 +234,8 @@ class TgChart {
     draw() {
         this.clear();
         this.drawGrid();
-        this.drawLines();
+        this.drawLines(this.chartVP, true);
         this.drawNumbers();
-        this.drawXAxis();
         this.drawLines(this.timeLineVP);
         this.drawTrack();
     }
@@ -269,12 +270,20 @@ class TgChart {
         }
     }
 
-    drawLines(vp = this.chartVP, startX = 0, endX = this.pointsCount - 1) {
+    drawLines(vp = this.chartVP, drawX = false) {
         this.ctx.lineWidth = this.lineWidth;
+        this.ctx.fillStyle = 'rgba(0,0,0,.4)';
+        this.ctx.font = '12px sans-serif';
+
         let x0, y0, x1, y1;
-        for (let i = startX; i < endX; i += 1) {
-            x0 = this.getX(this.columns['x'].value[i], vp) - (vp.offset || 0);
-            x1 = this.getX(this.columns['x'].value[i + 1], vp) - (vp.offset || 0);
+        const sectionsCount = vp.width() / 100;
+        const sectionSize = Math.round(this.pointsCount / sectionsCount);
+        const sectionWidth = vp.width() / sectionsCount;
+        let sectionNumber = 0;
+
+        for (let i = 0; i < this.pointsCount - 1; i += 1) {
+            x0 = this.getX(this.columns.x.value[i], vp) - (vp.offset || 0);
+            x1 = this.getX(this.columns.x.value[i + 1], vp) - (vp.offset || 0);
             if (x0 < -50 || x1 > vp.x1 + 50) continue;
 
             for (const key of Object.keys(this.columns).filter(k => this.isLineCol(k) && this.columns[k].shown)) {
@@ -287,26 +296,15 @@ class TgChart {
                 this.ctx.lineTo(x1, y1);
                 this.ctx.stroke();
             }
-        }
-    }
 
-    drawXAxis() {
-        this.ctx.fillStyle = this.gridColor;
-        this.ctx.font = '12px sans-serif';
-        const sectionsCount = Math.floor(this.canvas.width / 100);
-        const xSectorSize = this.canvas.width / sectionsCount;
-        const step = Math.floor(this.pointsCount * this.trackSize / 100 / sectionsCount);
-        const start = 0;
-        const end = 0;
-        let iteration = 0;
+            if (!drawX || i % sectionSize !== 0) continue;
 
-        for (let i = start; i < end; i += step) {
-            const date = new Date(this.columns['x'].value[i]);
+            const date = new Date(this.columns.x.value[i]);
             const text = `${this.months[date.getMonth()]} ${date.getDate()}`;
+            console.log(sectionWidth * sectionNumber + sectionWidth / 6);
             this.ctx.fillText(text,
-                xSectorSize * iteration + xSectorSize / 3,
+                sectionWidth * sectionNumber++ + sectionWidth / 6,
                 this.xAxisVP.y0 + 16);
-            iteration++;
         }
     }
 
@@ -337,8 +335,8 @@ class TgChart {
     }
 
     getX(value, vp = this.chartVP) {
-        return (value - this.columns['x'].value[0]) * vp.width() /
-            (this.columns['x'].value[this.pointsCount - 1] - this.columns['x'].value[0]);
+        return (value - this.columns.x.value[0]) * vp.width() /
+            (this.columns.x.value[this.pointsCount - 1] - this.columns.x.value[0]);
     }
 
     getY(value, max = this.maxY, vp = this.chartVP) {
@@ -348,6 +346,18 @@ class TgChart {
 
     isLineCol(key) {
         return this.data.types[key] === 'line';
+    }
+
+    findClosestIndex(value) {
+        let index = -1;
+        this.columns.x.value.reduce((minDifference, cur, i) => {
+            const diff = Math.abs(cur - value);
+            if (diff < minDifference) {
+                index = i;
+                return diff;
+            } else return minDifference;
+        }, 0);
+        return index;
     }
 }
 
