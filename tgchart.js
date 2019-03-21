@@ -8,6 +8,7 @@ class TgChart {
         this.timeLineHeight = 80;
         this.gridColor = '#A9ABAD';
         this.months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        this.days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         this.maxY = 0;
         this.lineWidth = 3;
         this.trackSize = 30; // %
@@ -23,10 +24,13 @@ class TgChart {
         // create elements
         this.canvas = TgChart.dom(this.container, 'canvas');
         this.buttons = TgChart.dom(this.container, 'div');
+        this.tooltip = TgChart.dom(this.container, 'div');
+
         this.ctx = this.canvas.getContext('2d');
         // elements styles
         this.container.classList.add('tg-chart-wrapper');
         this.buttons.className = 'tg-chart-buttons';
+        this.tooltip.className = 'tg-chart-tooltip';
         this.theme = 'light';
         // create buttons
         Object.keys(this.data.names).forEach(key => {
@@ -56,6 +60,7 @@ class TgChart {
                 shown: true,
                 value: col.slice(1),
                 key: col[0],
+                name: this.data.names[col[0]],
             };
             return acc;
         }, {});
@@ -105,7 +110,10 @@ class TgChart {
     }
 
     prepareToMove(e) {
-        if (!this.canvas.contains(e.target)) return;
+        if (!this.canvas.contains(e.target)) {
+            this.setTooltip(false);
+            return;
+        }
         let isTouched, movementX, offsetY, offsetX;
         const rect = this.canvas.getBoundingClientRect();
 
@@ -126,9 +134,11 @@ class TgChart {
     }
 
     onTouchOrMouseMove(movementX, isTouched, offsetX, offsetY) {
+
         if (!this.mode && !(offsetX >= this.timeLineVP.x0 && offsetX <= this.timeLineVP.x1 &&
                 offsetY >= this.timeLineVP.y0 && offsetY <= this.timeLineVP.y1)) {
             this.canvas.style.setProperty('cursor', 'default');
+            this.setTooltip(offsetX);
             return;
         }
 
@@ -164,7 +174,50 @@ class TgChart {
         this.draw();
     }
 
+    setTooltip(x) {
+        if (x === false) {
+            this.tooltip.classList.remove('tg-chart-tooltip_shown');
+            return;
+        }
+        const index = this.getItemIndexByX(x);
+        if (index == null) {
+            this.setTooltip(false);
+            return;
+        }
+        const values = Object.keys(this.columns)
+            .filter(key => this.columns[key].shown)
+            .map(key => {
+                return {
+                    value: this.columns[key].value[index],
+                    name: this.columns[key].name,
+                    key,
+                };
+            });
 
+        if (!values) {
+            this.tooltip.classList.remove('tg-chart-tooltip_shown');
+        }
+
+        const xValue = values.find(v => !this.isLineCol(v.key)).value;
+        const x0 = this.getX(xValue);
+        const date = new Date(x0);
+        const domNodes = values
+            .filter(v => this.isLineCol(v.key))
+            .map(v => {
+                return `<div class="tg-chart-tooltip__item" style="color:${this.data.colors[v.key]}">
+                    <span style="font-weight:bold">${v.value}</span>
+                    <span>${v.name}</span>
+                </div>`;
+            })
+            .join('');
+
+        this.tooltip.classList.add('tg-chart-tooltip_shown');
+        this.tooltip.style.setProperty('left', `${x0}px`);
+
+        this.tooltip.innerHTML = `
+        <span class="tg-chart-tooltip__title">${this.days[date.getDay()]}, ${this.months[date.getMonth()]} ${date.getDate()}</span>
+        ${domNodes}`;
+    }
 
     onBtnClick(e, key) {
         this.columns[key].shown = !e.target.checked;
@@ -282,10 +335,16 @@ class TgChart {
         const sectionWidth = vp.width() / sectionsCount;
         let sectionNumber = 0;
 
+        if (vp.offset != null) {
+            this.startXIndex = null;
+            this.endXIndex = null;
+        }
         for (let i = 0; i < this.pointsCount - 1; i += 1) {
             x0 = this.getX(this.columns.x.value[i], vp) - (vp.offset || 0);
             x1 = this.getX(this.columns.x.value[i + 1], vp) - (vp.offset || 0);
             if (x0 < -50 || x1 > vp.x1 + 50) continue;
+            if (this.startXIndex === null) this.startXIndex = i;
+            else this.endXIndex = i;
 
             for (const key of Object.keys(this.columns).filter(k => this.isLineCol(k) && this.columns[k].shown)) {
                 y0 = this.getY(this.columns[key].value[i], this.maxY, vp);
@@ -344,6 +403,15 @@ class TgChart {
         return h - value * h / max + vp.y0;
     }
 
+    getItemIndexByX(x) {
+        if (this.startXIndex == null || this.endXIndex == null) return;
+        const endX = this.getX(this.columns.x.value[this.endXIndex]);
+        const startX = this.getX(this.columns.x.value[this.startXIndex]);
+        const xPercent = x * 100 / (endX - startX);
+        const index = Math.floor(xPercent * 100 / this.pointsCount);
+        return index;
+    }
+
     isLineCol(key) {
         return this.data.types[key] === 'line';
     }
@@ -369,6 +437,10 @@ class TgChart {
 
     getTextColor() {
         return this.theme === 'dark' ? '#fff' : '#444';
+    }
+
+    getBgColor() {
+        return this.theme === 'dark' ? '#242F3E' : '#fff';
     }
 }
 
