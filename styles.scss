@@ -1,3 +1,8 @@
+:root {
+  --main-color: #fff;
+  --accent-color: #242F3E;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -7,8 +12,20 @@ body {
   min-height: 100vh;
   min-width: 320px;
   overflow-x: hidden;
-  background-color: #efefef;
+  background-color: var(--main-color);
   transition: all .2s;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  z-index: 10;
+  justify-content: center;
+  background-color: var(--main-color);
+  padding: 10px 0;
+  transition: all .2s;
+  box-shadow: 0 0 12px rgba(0, 0, 0, .15);
 }
 
 .body_dark {
@@ -27,30 +44,19 @@ body {
   }
 
   &__item {
-    background-color: #fff;
+    background-color: var(--main-color);
     box-shadow: 0 0 12px rgba(0, 0, 0, .15);
   }
 }
 
+#theme {
+  transition: .2s;
 
-.switch-theme {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 80px;
-  cursor: pointer;
-  font-size: 12px;
-  margin: auto;
-  border: none;
-  background-color: #242F3E;
-  color: #fff;
-  padding: 10px;
-  box-shadow: 0 0 12px rgba(0, 0, 0, .2);
-  transition: all .2s;
+  &:hover {
+    transform: rotateZ(-25deg) scale(.9);
+  }
 
-  &_light {
-    color: inherit;
-    background-color: #fff;
+  path {
+    fill: var(--accent-color);
   }
 }
