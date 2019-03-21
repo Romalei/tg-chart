@@ -51,9 +51,10 @@ body {
 
 #theme {
   transition: .2s;
+  cursor: pointer;
 
-  &:hover {
-    transform: rotateZ(-25deg) scale(.9);
+  &.rotated {
+    transform: rotateZ(-120deg) !important;
   }
 
   path {

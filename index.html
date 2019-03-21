@@ -48,6 +48,7 @@
 
             
             themeSwitcher.addEventListener('click', () => {
+                themeSwitcher.classList.toggle('rotated');
                 root.style.setProperty('--accent-color', theme);
                 theme = theme === '#fff' ? '#242F3E' : '#fff';
                 root.style.setProperty('--main-color', theme);
