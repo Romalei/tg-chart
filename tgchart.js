@@ -5,22 +5,27 @@ class TgChart {
     }
 
     init() {
-        this.timeLineHeight = 80;
-        this.gridColor = '#A9ABAD';
         this.months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         this.days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
         this.maxY = 0;
-        this.lineWidth = 3;
-        this.trackSize = 30; // %
-        this.minTrackSize = 20; // %
+        this.config = {
+            trackSize: 30, // %
+            minTrackSize: 20, // %
+            lineWidth: 3, // px
+            gridColor: '#A9ABAD',
+            timeLineHeight: 80,
+        };
     }
 
-    constructor(container, data, theme = 'light') {
+    constructor(container, data, config) {
         if (typeof data !== 'object') return;
         this.data = data;
         this.container = container;
         this.init();
-        this.theme = theme;
+        this.config = {
+            ...this.config,
+            ...config,
+        };
 
         // create elements
         this.canvas = TgChart.dom(this.container, 'canvas');
@@ -127,7 +132,7 @@ class TgChart {
             movementX = this.lastTouchX ? e.touches[0].pageX - this.lastTouchX : 0;
             this.lastTouchX = e.touches[0].pageX;
         }
-        
+
         this.onTouchOrMouseMove(movementX, isTouched, offsetX, offsetY);
     }
 
@@ -230,9 +235,9 @@ class TgChart {
         this.canvas.width = this.container.clientWidth;
         this.canvas.height = 400;
 
-        this.timeLineVP = this.makeViewport(0, this.canvas.height - this.timeLineHeight, this.canvas.width, this.canvas.height);
+        this.timeLineVP = this.makeViewport(0, this.canvas.height - this.config.timeLineHeight, this.canvas.width, this.canvas.height);
         this.xAxisVP = this.makeViewport(0, this.timeLineVP.y0 - 30, this.canvas.width, this.timeLineVP.y0 - 1);
-        this.chartVP = this.makeViewport(0, 30, this.canvas.width * 100 / this.trackSize, this.xAxisVP.y0 - 1);
+        this.chartVP = this.makeViewport(0, 30, this.canvas.width * 100 / this.config.trackSize, this.xAxisVP.y0 - 1);
         this.setTrack();
         this.move(0);
 
@@ -241,7 +246,7 @@ class TgChart {
 
     setTrack() {
         const trackX0 = this.trackVP ? this.trackVP.x0 : 0;
-        const trackX1 = trackX0 + this.trackSize * this.canvas.width / 100;
+        const trackX1 = trackX0 + this.config.trackSize * this.canvas.width / 100;
         this.trackVP = {
             ...this.makeViewport(trackX0, this.timeLineVP.y0, trackX1, this.timeLineVP.y1),
             resizer: 10,
@@ -252,7 +257,7 @@ class TgChart {
         if (this.trackVP.x1 + offset > this.canvas.width || this.trackVP.x0 + offset < 0) return;
         this.trackVP.x0 += offset;
         this.trackVP.x1 += offset;
-        this.chartVP.offset = this.trackVP.x0 * 100 / this.trackSize;
+        this.chartVP.offset = this.trackVP.x0 * 100 / this.config.trackSize;
     }
 
     resize(offset) {
@@ -261,23 +266,23 @@ class TgChart {
         switch (this.mode) {
             case 'resizing-l':
                 const x0 = this.trackVP.x0 + offset;
-                newSize = this.trackSize - value;
-                if (newSize >= this.minTrackSize && x0 >= 0) {
-                    this.trackSize = newSize;
+                newSize = this.config.trackSize - value;
+                if (newSize >= this.config.minTrackSize && x0 >= 0) {
+                    this.config.trackSize = newSize;
                     this.trackVP.x0 += offset;
                 }
                 break;
             case 'resizing-r':
                 const x1 = this.trackVP.x1 + offset;
-                newSize = this.trackSize + value;
-                if (newSize >= this.minTrackSize && x1 <= this.canvas.width) this.trackSize += value;
+                newSize = this.config.trackSize + value;
+                if (newSize >= this.config.minTrackSize && x1 <= this.canvas.width) this.config.trackSize += value;
                 break;
         }
         this.setViewports();
     }
 
     calculateMaxY() {
-        this.maxY = Object.keys(this.columns).reduce((max, k) => {
+        this.targetMaxY = Object.keys(this.columns).reduce((max, k) => {
             if (!this.isLineCol(k) || !this.columns[k].shown) return max;
             const m = Math.max(...this.columns[k].value);
             return m > max ? m : max;
@@ -287,11 +292,23 @@ class TgChart {
     // DRAWING
     draw() {
         this.clear();
+        this.drawMainChart();
+        this.drawLines(this.timeLineVP, false, this.targetMaxY);
+        this.drawTrack();
+        this.drawMainChart();
+    }
+
+    drawMainChart() {
+        if (this.targetMaxY && Math.abs(this.targetMaxY - this.maxY) > 1) {
+            this.maxY += (this.targetMaxY - this.maxY) / 10;
+            requestAnimationFrame(this.drawMainChart.bind(this));
+        } else {
+            this.maxY = this.targetMaxY;
+        }
+        this.ctx.clearRect(this.chartVP.x0, 0, this.canvas.width, this.chartVP.y1 + this.xAxisVP.height());
         this.drawGrid();
         this.drawLines(this.chartVP, true);
         this.drawNumbers();
-        this.drawLines(this.timeLineVP);
-        this.drawTrack();
     }
 
     drawGrid() {
@@ -299,7 +316,7 @@ class TgChart {
         const sectionValue = Math.floor(Math.round(this.maxY / 5 / normalizer) * normalizer);
 
         this.ctx.lineWidth = 0.2;
-        this.ctx.strokeStyle = this.gridColor;
+        this.ctx.strokeStyle = this.config.gridColor;
         let y;
         for (let i = 0; i < 6; i++) {
             y = this.getY(sectionValue * i, sectionValue * 5);
@@ -324,8 +341,8 @@ class TgChart {
         }
     }
 
-    drawLines(vp = this.chartVP, drawX = false) {
-        this.ctx.lineWidth = this.lineWidth;
+    drawLines(vp = this.chartVP, drawX = false, maxY = this.maxY) {
+        this.ctx.lineWidth = this.config.lineWidth;
         this.ctx.fillStyle = this.getTextColor();
         this.ctx.font = '12px sans-serif';
 
@@ -341,8 +358,8 @@ class TgChart {
             if (x0 < -50 || x1 > this.canvas.width + 50) continue;
 
             for (const key of Object.keys(this.columns).filter(k => this.isLineCol(k) && this.columns[k].shown)) {
-                y0 = this.getY(this.columns[key].value[i], this.maxY, vp);
-                y1 = this.getY(this.columns[key].value[i + 1], this.maxY, vp);
+                y0 = this.getY(this.columns[key].value[i], maxY, vp);
+                y1 = this.getY(this.columns[key].value[i + 1], maxY, vp);
 
                 this.ctx.beginPath();
                 this.ctx.strokeStyle = this.data.colors[key];
