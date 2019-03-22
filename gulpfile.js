@@ -10,7 +10,7 @@ sass.compiler = require('node-sass');
 let isProd = true;
 
 gulp.task('sass', function () {
-    return gulp.src(isProd ? './chart.scss' : ['./chart.scss', './styles.scss'])
+    return gulp.src(isProd ? './tg-chart.scss' : ['./tg-chart.scss', './styles.scss'])
         .pipe(sass().on('error', sass.logError))
         .pipe(gulp.dest(isProd ? 'dist' : './'))
         .pipe(browserSync.stream());
@@ -35,10 +35,15 @@ gulp.task('browser-sync', function () {
     });
 });
 
+gulp.task('data', function () {
+    return gulp.src('data/**/*.*')
+        .pipe(gulp.dest('dist/data'));
+})
+
 gulp.task('watch', gulp.parallel('sass'), function () {
     gulp.watch(['./index.html', './tgchart.js']).on('change', browserSync.reload);
-    gulp.watch(['./styles.scss', './chart.scss'], gulp.parallel('sass'));
+    gulp.watch(['./styles.scss', './tg-chart.scss'], gulp.parallel('sass'));
 });
 
-gulp.task('build', gulp.parallel('sass', 'compress'));
+gulp.task('build', gulp.parallel('sass', 'compress', 'data'));
 gulp.task('default', gulp.parallel('browser-sync', 'watch'));

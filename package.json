@@ -6,7 +6,8 @@
   "author": "Roman Zherdev",
   "license": "ISC",
   "scripts": {
-    "start": "gulp"
+    "start": "gulp",
+    "build": "gulp build"
   },
   "devDependencies": {
     "@babel/core": "^7.3.4",

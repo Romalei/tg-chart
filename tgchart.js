@@ -14,6 +14,8 @@ class TgChart {
             lineWidth: 3, // px
             gridColor: '#A9ABAD',
             timeLineHeight: 80,
+            responsive: false,
+            height: 400, // px
         };
     }
 
@@ -77,7 +79,7 @@ class TgChart {
         document.addEventListener('touchmove', this.prepareToMove.bind(this));
 
         TgChart.refs.push(this);
-        if (!TgChart.isListenerEnabled) {
+        if (!TgChart.isListenerEnabled && this.config.responsive) {
             window.addEventListener('resize', TgChart.onWindowResize);
             TgChart.isListenerEnabled = true;
         }
@@ -233,7 +235,7 @@ class TgChart {
 
     setViewports() {
         this.canvas.width = this.container.clientWidth;
-        this.canvas.height = 400;
+        this.canvas.height = this.config.height;
 
         this.timeLineVP = this.makeViewport(0, this.canvas.height - this.config.timeLineHeight, this.canvas.width, this.canvas.height);
         this.xAxisVP = this.makeViewport(0, this.timeLineVP.y0 - 30, this.canvas.width, this.timeLineVP.y0 - 1);
@@ -439,7 +441,7 @@ class TgChart {
         return index;
     }
 
-    setTheme(theme) {
+    switchTheme(theme = this.config.theme === 'light' ? 'dark' : 'light') {
         this.container.classList.remove(`tg-chart-wrapper_${this.theme}`);
         this.container.classList.add(`tg-chart-wrapper_${theme}`);
         this.theme = theme;

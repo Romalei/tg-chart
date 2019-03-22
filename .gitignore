@@ -1,8 +1,8 @@
 node_modules
 .vscode
 .idea
-chart.css
-chart.css.map
+tg-chart.css
+tg-chart.css.map
 styles.css
 styles.css.map
 dist

@@ -8,7 +8,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="chart.css">
+    <link rel="stylesheet" href="tg-chart.css">
 </head>
 
 <body>
@@ -30,7 +30,7 @@
             let gridRef = document.getElementById('grid');
             let charts = [];
             let root = document.documentElement;
-            let theme = '#fff';
+            let theme = 'light';
             let themeSwitcher = document.getElementById('theme');
 
             fetch('./data/chart_data.json')
@@ -50,10 +50,10 @@
             themeSwitcher.addEventListener('click', () => {
                 themeSwitcher.classList.toggle('rotated');
                 root.style.setProperty('--accent-color', theme);
-                theme = theme === '#fff' ? '#242F3E' : '#fff';
+                theme = theme === 'light' ? 'dark' : 'light';
                 root.style.setProperty('--main-color', theme);
                 document.body.classList.toggle('body_dark');
-                charts.forEach(el => el.setTheme(el.theme === 'light' ? 'dark' : 'light'));
+                charts.forEach(el => el.switchTheme(theme));
             });
         }())
     </script>
