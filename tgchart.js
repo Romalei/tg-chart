@@ -16,6 +16,7 @@ class TgChart {
             timeLineHeight: 80,
             responsive: false,
             height: 400, // px
+            theme: 'light',
         };
     }
 
@@ -442,18 +443,18 @@ class TgChart {
     }
 
     switchTheme(theme = this.config.theme === 'light' ? 'dark' : 'light') {
-        this.container.classList.remove(`tg-chart-wrapper_${this.theme}`);
+        this.container.classList.remove(`tg-chart-wrapper_${this.config.theme}`);
         this.container.classList.add(`tg-chart-wrapper_${theme}`);
-        this.theme = theme;
+        this.config.theme = theme;
         this.draw();
     }
 
     getTextColor() {
-        return this.theme === 'dark' ? '#fff' : '#444';
+        return this.config.theme === 'dark' ? '#fff' : '#444';
     }
 
     getBgColor() {
-        return this.theme === 'dark' ? '#242F3E' : '#fff';
+        return this.config.theme === 'dark' ? '#242F3E' : '#fff';
     }
 }
 

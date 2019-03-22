@@ -12,6 +12,7 @@ Small chart library for telegram challenge
     timeLineHeight: 80, // px 
     height: 400, // px 
     responsive: true, // boolean - if true, adds event listener on window resize, recalculate width and redraw the chart
+    theme: 'light' | 'dark'
 }
 ```
 ## Data interface
@@ -33,5 +34,5 @@ Small chart library for telegram challenge
 ## Available methods
 | Name | Description |
 |---|---|
-| setTheme(theme) | "theme" can be 'light' or 'dark' |
+| switchTheme(theme) | "theme" can be 'light' or 'dark'. If null, so it will change from 'light' to 'dark' and vise versa |
 | draw() | redraw the chart |

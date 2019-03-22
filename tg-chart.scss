@@ -32,8 +32,15 @@ $themes: (dark: #242F3E, light: #fff);
     }
 
     &_dark {
-        .tg-chart-checkbox:checked+.tg-chart-checkbox-indicator::after {
-            background-color: theme(dark);
+        .tg-chart-buttons__item {
+            border-color: #ffffff22 !important;
+            color: #fff;
+        }
+
+        .tg-chart-checkbox:checked {
+            &+.tg-chart-checkbox-indicator::after {
+                background-color: theme(dark);
+            }
         }
 
         .tg-chart-tooltip {
@@ -52,7 +59,6 @@ $themes: (dark: #242F3E, light: #fff);
     &__item {
         box-sizing: inherit;
         background: none;
-        border: none;
         border-radius: 10em;
         outline: none;
         position: relative;
@@ -65,6 +71,7 @@ $themes: (dark: #242F3E, light: #fff);
         align-items: center;
         cursor: pointer;
         user-select: none;
+        transition: .2s;
     }
 }
 
@@ -163,8 +170,9 @@ $themes: (dark: #242F3E, light: #fff);
 .tg-chart-tooltip {
     opacity: 0;
     position: absolute;
+    top: 10%;
+    z-index: 15;
     width: fit-content;
-    top: 5%;
     visibility: hidden;
     transition: all .2s;
     background-color: theme(light);
@@ -172,7 +180,6 @@ $themes: (dark: #242F3E, light: #fff);
     box-shadow: 0 0 4px rgba(0, 0, 0, .15);
     padding: 10px 14px;
     font-size: 1.25rem;
-    z-index: 15;
     user-select: none;
 
     &__title {

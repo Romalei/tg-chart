@@ -1,8 +1,3 @@
-:root {
-  --main-color: #fff;
-  --accent-color: #242F3E;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -12,7 +7,7 @@ body {
   min-height: 100vh;
   min-width: 320px;
   overflow-x: hidden;
-  background-color: var(--main-color);
+  background-color: #fff;
   transition: all .2s;
 }
 
@@ -22,10 +17,14 @@ body {
   display: flex;
   z-index: 100;
   justify-content: center;
-  background-color: var(--main-color);
+  background-color: #fff;
   padding: 10px 0;
   transition: all .2s;
   box-shadow: 0 0 12px rgba(0, 0, 0, .15);
+
+  &_dark {
+    background-color: #242F3E;
+  }
 }
 
 .body_dark {
@@ -44,20 +43,23 @@ body {
   }
 
   &__item {
-    background-color: var(--main-color);
     box-shadow: 0 0 12px rgba(0, 0, 0, .15);
   }
 }
 
-#theme {
+.theme {
   transition: .2s;
   cursor: pointer;
 
-  &.rotated {
-    transform: rotateZ(-120deg) !important;
+  path {
+    fill: #fff;
   }
 
-  path {
-    fill: var(--accent-color);
+  &_dark path {
+    fill: #242F3E;
+  }
+
+  &_rotated {
+    transform: rotateZ(-120deg);
   }
 }
