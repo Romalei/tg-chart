@@ -128,8 +128,6 @@ class TgChart {
             this.lastTouchX = e.touches[0].pageX;
         }
         
-        log(offsetY);
-
         this.onTouchOrMouseMove(movementX, isTouched, offsetX, offsetY);
     }
 
@@ -450,16 +448,4 @@ TgChart.dom = function (parent, element, className) {
 }
 TgChart.onWindowResize = function () {
     TgChart.refs.forEach(ref => ref.setViewports());
-}
-
-function log(text) {
-    if (!window.lalala) {
-        window.lalala = TgChart.dom(document.body, 'div');
-        window.lalala.style.setProperty('position', 'fixed');
-        window.lalala.style.setProperty('left', '0');
-        window.lalala.style.setProperty('top', '0');
-        window.lalala.style.setProperty('padding', '15px');
-        window.lalala.style.setProperty('z-index', '100');
-    }
-    window.lalala.innerText = text;
 }
