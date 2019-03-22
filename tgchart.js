@@ -15,23 +15,21 @@ class TgChart {
         this.minTrackSize = 20; // %
     }
 
-    constructor(container, data) {
+    constructor(container, data, theme = 'light') {
         if (typeof data !== 'object') return;
         this.data = data;
         this.container = container;
         this.init();
+        this.theme = theme;
 
         // create elements
         this.canvas = TgChart.dom(this.container, 'canvas');
-        this.buttons = TgChart.dom(this.container, 'div');
-        this.tooltip = TgChart.dom(this.container, 'div');
+        this.buttons = TgChart.dom(this.container, 'div', 'tg-chart-buttons');
+        this.tooltip = TgChart.dom(this.container, 'div', 'tg-chart-tooltip');
 
         this.ctx = this.canvas.getContext('2d');
         // elements styles
         this.container.classList.add('tg-chart-wrapper');
-        this.buttons.className = 'tg-chart-buttons';
-        this.tooltip.className = 'tg-chart-tooltip';
-        this.theme = 'light';
         // create buttons
         Object.keys(this.data.names).forEach(key => {
             const label = TgChart.dom(this.buttons, 'label')
@@ -125,10 +123,12 @@ class TgChart {
         } else if (e instanceof TouchEvent) {
             isTouched = !!e.touches.length;
             offsetX = e.touches[0].pageX - rect.left;
-            offsetY = e.touches[0].pageY;
+            offsetY = e.touches[0].pageY - rect.top;
             movementX = this.lastTouchX ? e.touches[0].pageX - this.lastTouchX : 0;
             this.lastTouchX = e.touches[0].pageX;
         }
+        
+        log(offsetY);
 
         this.onTouchOrMouseMove(movementX, isTouched, offsetX, offsetY);
     }
@@ -141,6 +141,8 @@ class TgChart {
             this.setTooltip(offsetX);
             return;
         }
+
+        this.setTooltip(false);
 
         if (!this.mode) {
             if (offsetX <= this.trackVP.x0 + this.trackVP.resizer) {
@@ -179,7 +181,7 @@ class TgChart {
             this.tooltip.classList.remove('tg-chart-tooltip_shown');
             return;
         }
-        const index = this.getItemIndexByX(x);
+        const index = this.getItemIndexByX(x + this.chartVP.offset);
         if (index == null) {
             this.setTooltip(false);
             return;
@@ -212,7 +214,7 @@ class TgChart {
             .join('');
 
         this.tooltip.classList.add('tg-chart-tooltip_shown');
-        this.tooltip.style.setProperty('left', `${x0}px`);
+        this.tooltip.style.setProperty('left', `${x + 10}px`);
 
         this.tooltip.innerHTML = `
         <span class="tg-chart-tooltip__title">${this.days[date.getDay()]}, ${this.months[date.getMonth()]} ${date.getDate()}</span>
@@ -332,19 +334,13 @@ class TgChart {
         let x0, y0, x1, y1;
         const sectionsCount = vp.width() / 100;
         const sectionSize = Math.floor(this.pointsCount / sectionsCount);
-        const sectionWidth = vp.width() / sectionsCount;
+        const sectionWidth = vp.width() / (sectionsCount + 1);
         let sectionNumber = 0;
 
-        if (vp.offset != null) {
-            this.startXIndex = null;
-            this.endXIndex = null;
-        }
-        for (let i = 0; i < this.pointsCount - 1; i += 1) {
+        for (var i = 0; i < this.pointsCount - 1; i += 1) {
             x0 = this.getX(this.columns.x.value[i], vp) - (vp.offset || 0);
             x1 = this.getX(this.columns.x.value[i + 1], vp) - (vp.offset || 0);
-            if (x0 < -50 || x1 > vp.x1 + 50) continue;
-            if (this.startXIndex === null) this.startXIndex = i;
-            else this.endXIndex = i;
+            if (x0 < -50 || x1 > this.canvas.width + 50) continue;
 
             for (const key of Object.keys(this.columns).filter(k => this.isLineCol(k) && this.columns[k].shown)) {
                 y0 = this.getY(this.columns[key].value[i], this.maxY, vp);
@@ -365,6 +361,7 @@ class TgChart {
                 sectionWidth * sectionNumber++ + sectionWidth / 6,
                 this.xAxisVP.y0 + 16);
         }
+
     }
 
     drawTrack() {
@@ -404,11 +401,10 @@ class TgChart {
     }
 
     getItemIndexByX(x) {
-        if (this.startXIndex == null || this.endXIndex == null) return;
-        const endX = this.getX(this.columns.x.value[this.endXIndex]);
-        const startX = this.getX(this.columns.x.value[this.startXIndex]);
+        const endX = this.getX(this.columns.x.value[this.pointsCount - 1]);
+        const startX = this.getX(this.columns.x.value[0]);
         const xPercent = x * 100 / (endX - startX);
-        const index = Math.floor(xPercent * 100 / this.pointsCount);
+        const index = Math.floor(xPercent * this.pointsCount / 100);
         return index;
     }
 
@@ -446,11 +442,24 @@ class TgChart {
 
 TgChart.refs = [];
 TgChart.isListenerEnabled = false;
-TgChart.dom = function (parent, element) {
+TgChart.dom = function (parent, element, className) {
     const el = document.createElement(element);
     parent.appendChild(el);
+    if (className) el.className = className;
     return el;
 }
 TgChart.onWindowResize = function () {
     TgChart.refs.forEach(ref => ref.setViewports());
+}
+
+function log(text) {
+    if (!window.lalala) {
+        window.lalala = TgChart.dom(document.body, 'div');
+        window.lalala.style.setProperty('position', 'fixed');
+        window.lalala.style.setProperty('left', '0');
+        window.lalala.style.setProperty('top', '0');
+        window.lalala.style.setProperty('padding', '15px');
+        window.lalala.style.setProperty('z-index', '100');
+    }
+    window.lalala.innerText = text;
 }
