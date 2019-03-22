@@ -5,6 +5,7 @@ const sass = require('gulp-sass');
 const uglify = require('gulp-uglify');
 const babel = require('gulp-babel');
 const browserSync = require('browser-sync').create();
+const cleanCSS = require('gulp-clean-css');
 
 sass.compiler = require('node-sass');
 let isProd = true;
@@ -12,6 +13,7 @@ let isProd = true;
 gulp.task('sass', function () {
     return gulp.src(isProd ? './tg-chart.scss' : ['./tg-chart.scss', './styles.scss'])
         .pipe(sass().on('error', sass.logError))
+        .pipe(cleanCSS({compatibility: 'ie11'}))
         .pipe(gulp.dest(isProd ? 'dist' : './'))
         .pipe(browserSync.stream());
 });
