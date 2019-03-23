@@ -72,7 +72,6 @@ class TgChart {
 		}, {});
 
 		this.calculateMaxY();
-		this.setViewports();
 
 		this.canvas.addEventListener('mousedown', this.onMouseDownOrTouchStart.bind(this));
 		document.addEventListener('mousemove', this.prepareToMove.bind(this));
@@ -86,7 +85,7 @@ class TgChart {
 		}
 
 		setTimeout(() => {
-			this.resize(0);
+			this.resize(0); // set size and also draw the chart
 		}, 0);
 	}
 
@@ -314,14 +313,14 @@ class TgChart {
 	}
 
 	drawGrid() {
-		const normalizer = Math.pow(10, this.maxY.toString().length - 2);
-		const sectionValue = Math.floor(Math.round(this.maxY / 5 / normalizer) * normalizer);
+		const normalizer = Math.pow(10, this.targetMaxY.toString().length - 2);
+		const sectionValue = Math.floor(Math.round(this.targetMaxY / 5 / normalizer) * normalizer);
 
 		this.ctx.lineWidth = 0.2;
 		this.ctx.strokeStyle = this.config.gridColor;
 		let y;
 		for (let i = 0; i < 6; i++) {
-			y = this.getY(sectionValue * i, sectionValue * 5);
+			y = this.getY(this.targetMaxY / 5 * i);
 			this.ctx.beginPath();
 			this.ctx.moveTo(0, y);
 			this.ctx.lineTo(this.canvas.width, y);
@@ -330,15 +329,16 @@ class TgChart {
 	}
 
 	drawNumbers() {
-		const normalizer = Math.pow(10, this.maxY.toString().length - 2);
-		const sectionValue = Math.floor(Math.round(this.maxY / 5 / normalizer) * normalizer);
+		const normalizer = Math.pow(10, this.targetMaxY.toString().length - 2);
+		const sectionValue = Math.floor(Math.round(this.targetMaxY / 5 / normalizer) * normalizer);
+		
 
 		this.ctx.fillStyle = this.getTextColor();
 		this.ctx.font = '12px sans-serif';
 
 		let y;
 		for (let i = 0; i < 6; i++) {
-			y = this.getY(sectionValue * i, sectionValue * 5);
+			y = this.getY(this.targetMaxY / 5 * i);
 			this.ctx.fillText(sectionValue * i, 5, y - 8);
 		}
 	}
