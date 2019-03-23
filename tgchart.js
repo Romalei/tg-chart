@@ -84,9 +84,7 @@ class TgChart {
 			TgChart.isListenerEnabled = true;
 		}
 
-		setTimeout(() => {
-			this.resize(0); // set size and also draw the chart
-		}, 0);
+		setTimeout(() => this.resize(0), 0); // set size and also draw the chart
 	}
 
 	makeViewport(x0, y0, x1, y1) {
@@ -107,15 +105,18 @@ class TgChart {
 	onMouseDownOrTouchStart(e) {
 		if (!this.canvas.contains(e.target)) return;
 		this.isTouched = true;
-		document.addEventListener('touchend', e => {
-			this.isTouched = false;
-			this.mode = null;
-			document.removeEventListener('touchend', arguments.callee);
-		})
+
+		document.addEventListener('touchend', this.onTouchEndOrMouseUp.bind(this));
+	}
+
+	onTouchEndOrMouseUp(e) {
+		this.isTouched = false;
+		this.mode = null;
+		document.removeEventListener('touchend', this.onTouchEndOrMouseUp);
 	}
 
 	prepareToMove(e) {
-		if (!this.canvas.contains(e.target)) {
+		if (!this.canvas.contains(e.target) || !this.timeLineVP) {
 			this.setTooltip(false);
 			return;
 		}
@@ -129,10 +130,13 @@ class TgChart {
 			movementX = e.movementX;
 		} else if (e instanceof TouchEvent) {
 			isTouched = !!e.touches.length;
-			offsetX = e.touches[0].pageX - rect.left;
-			offsetY = e.touches[0].pageY - rect.top;
+			offsetX = e.touches[0].clientX - rect.left;
+			offsetY = e.touches[0].clientY - rect.top;
+			console.log(e.touches[0].pageY + '+++' + rect.top);
+
 			movementX = this.lastTouchX ? e.touches[0].pageX - this.lastTouchX : 0;
 			this.lastTouchX = e.touches[0].pageX;
+			console.log(offsetY);
 		}
 
 		this.onTouchOrMouseMove(movementX, isTouched, offsetX, offsetY);
@@ -191,6 +195,8 @@ class TgChart {
 			this.setTooltip(false);
 			return;
 		}
+		console.log(this.columns, index);
+		
 		const values = Object.keys(this.columns)
 			.filter(key => this.columns[key].shown)
 			.map(key => {
@@ -206,8 +212,8 @@ class TgChart {
 		}
 
 		const xValue = values.find(v => !this.isLineCol(v.key)).value;
-		const x0 = this.getX(xValue);
-		const date = new Date(x0);
+		
+		const date = new Date(xValue);
 		const domNodes = values
 			.filter(v => this.isLineCol(v.key))
 			.map(v => {
@@ -218,8 +224,9 @@ class TgChart {
 			})
 			.join('');
 
+		const tooltipX = x + 10 + this.tooltip.clientWidth > this.canvas.width ? x - this.tooltip.clientWidth - 10 : x + 10;
 		this.tooltip.classList.add('tg-chart-tooltip_shown');
-		this.tooltip.style.setProperty('left', `${x + 10}px`);
+		this.tooltip.style.setProperty('left', `${tooltipX}px`);
 
 		this.tooltip.innerHTML = `
         <span class="tg-chart-tooltip__title">${this.days[date.getDay()]}, ${this.months[date.getMonth()]} ${date.getDate()}</span>
@@ -228,6 +235,7 @@ class TgChart {
 
 	onBtnClick(e, key) {
 		this.columns[key].shown = !e.target.checked;
+		if (!this.columns[key].shown) this.columns[key].disabledaAt = Date.now();
 		this.calculateMaxY();
 
 		this.draw();
@@ -294,9 +302,9 @@ class TgChart {
 	// DRAWING
 	draw() {
 		this.clear();
+		this.drawMainChart();
 		this.drawLines(this.timeLineVP, false, this.targetMaxY);
 		this.drawTrack();
-		this.drawMainChart();
 	}
 
 	drawMainChart() {
@@ -331,7 +339,7 @@ class TgChart {
 	drawNumbers() {
 		const normalizer = Math.pow(10, this.targetMaxY.toString().length - 2);
 		const sectionValue = Math.floor(Math.round(this.targetMaxY / 5 / normalizer) * normalizer);
-		
+
 
 		this.ctx.fillStyle = this.getTextColor();
 		this.ctx.font = '12px sans-serif';
@@ -360,16 +368,15 @@ class TgChart {
 			if (x0 < -50 || x1 > this.canvas.width + 50) continue;
 
 			for (const key of Object.keys(this.columns)
-				.filter(k => this.isLineCol(k) && (this.columns[k].shown || this.maxY !== this.targetMaxY))) {
+				.filter(k => this.isLineCol(k) && (this.columns[k].shown || maxY !== this.targetMaxY))) {
 
 				y0 = this.getY(this.columns[key].value[i], maxY, vp);
 				y1 = this.getY(this.columns[key].value[i + 1], maxY, vp);
 
 				this.ctx.beginPath();
-				const color = this.getLineColor(key);
-				
+
 				this.ctx.strokeStyle = this.getLineColor(key);
-				
+
 				this.ctx.moveTo(x0, y0);
 				this.ctx.lineTo(x1, y1);
 				this.ctx.stroke();
@@ -464,10 +471,9 @@ class TgChart {
 
 	getLineColor(key) {
 		if (this.columns[key].shown) return this.data.colors[key];
-		const dif = Math.abs(this.targetMaxY - this.maxY);
-		const alpha = dif / this.maxY;
+		const alpha = (200 - (Date.now() - this.columns[key].disabledaAt)) / 100;
 
-		return TgChart.hexToRgba(this.data.colors[key], alpha);
+		return TgChart.hexToRgba(this.data.colors[key], alpha < 0 ? 0 : alpha);
 	}
 }
 

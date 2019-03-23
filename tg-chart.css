@@ -12,6 +12,7 @@
   -webkit-transition: all .2s;
   transition: all .2s;
   position: relative;
+  overflow: hidden;
 }
 
 .tg-chart-wrapper_dark {
@@ -90,10 +91,11 @@
 .tg-chart-checkbox {
   -webkit-box-sizing: inherit;
           box-sizing: inherit;
-  -moz-appearance: none;
-       appearance: none;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
   position: absolute;
-  -webkit-appearance: none;
   outline: none;
   margin: 0;
 }
@@ -176,6 +178,8 @@
   margin: auto;
   left: calc(-1.35em - calc(2.5em - 16px) / 2);
   right: 0;
+  top: 0;
+  bottom: 0;
 }
 
 .tg-chart-checkbox-text {
@@ -209,6 +213,7 @@
      -moz-user-select: none;
       -ms-user-select: none;
           user-select: none;
+  pointer-events: none;
 }
 
 .tg-chart-tooltip__title {

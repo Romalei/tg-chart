@@ -37,6 +37,7 @@ body {
   grid-gap: 10px;
   padding: 10px;
   width: 100%;
+  overflow: hidden;
 
   @media only screen and (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -49,6 +50,8 @@ body {
 
 .theme {
   transition: .2s;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
 
   path {
