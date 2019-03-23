@@ -186,6 +186,7 @@ class TgChart {
 	setTooltip(x) {
 		if (x === false) {
 			this.tooltip.classList.remove('tg-chart-tooltip_shown');
+			this.draw();
 			return;
 		}
 		const index = this.getItemIndexByX(x + this.chartVP.offset);
