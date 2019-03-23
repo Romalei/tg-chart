@@ -116,7 +116,8 @@ class TgChart {
 	}
 
 	prepareToMove(e) {
-		if (!this.canvas.contains(e.target) || !this.timeLineVP) {
+		if (!this.timeLineVP) return;
+		if (!this.canvas.contains(e.target)) {
 			this.setTooltip(false);
 			return;
 		}
