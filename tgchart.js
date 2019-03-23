@@ -132,11 +132,9 @@ class TgChart {
 			isTouched = !!e.touches.length;
 			offsetX = e.touches[0].clientX - rect.left;
 			offsetY = e.touches[0].clientY - rect.top;
-			console.log(e.touches[0].pageY + '+++' + rect.top);
 
 			movementX = this.lastTouchX ? e.touches[0].pageX - this.lastTouchX : 0;
 			this.lastTouchX = e.touches[0].pageX;
-			console.log(offsetY);
 		}
 
 		this.onTouchOrMouseMove(movementX, isTouched, offsetX, offsetY);
@@ -195,8 +193,7 @@ class TgChart {
 			this.setTooltip(false);
 			return;
 		}
-		console.log(this.columns, index);
-		
+
 		const values = Object.keys(this.columns)
 			.filter(key => this.columns[key].shown)
 			.map(key => {
@@ -212,7 +209,7 @@ class TgChart {
 		}
 
 		const xValue = values.find(v => !this.isLineCol(v.key)).value;
-		
+
 		const date = new Date(xValue);
 		const domNodes = values
 			.filter(v => this.isLineCol(v.key))
@@ -230,7 +227,29 @@ class TgChart {
 
 		this.tooltip.innerHTML = `
         <span class="tg-chart-tooltip__title">${this.days[date.getDay()]}, ${this.months[date.getMonth()]} ${date.getDate()}</span>
-        ${domNodes}`;
+		${domNodes}`;
+
+		const yAxes = Object.keys(this.columns)
+			.filter(k => this.isLineCol(k) && this.columns[k].shown)
+			.map(k => this.columns[k]);
+
+		this.draw();
+		this.ctx.lineWidth = 0.2;
+		this.ctx.strokeStyle = this.config.gridColor;
+		this.ctx.beginPath();
+		this.ctx.moveTo(x, this.chartVP.y0);
+		this.ctx.lineTo(x, this.chartVP.y1);
+		this.ctx.stroke();
+		yAxes.forEach(y => {
+			this.ctx.beginPath();
+			this.ctx.strokeStyle = this.data.colors[y.key]
+			this.ctx.lineWidth = this.config.lineWidth;
+			this.ctx.fillStyle = this.config.theme === 'light' ? '#fff' : '#242F3E';
+			
+			this.ctx.arc(this.getX(this.columns.x.value[index]), this.getY(y.value[index]), this.config.lineWidth * 2, 0, Math.PI * 2);
+			this.ctx.fill();
+			this.ctx.stroke();
+		});
 	}
 
 	onBtnClick(e, key) {
